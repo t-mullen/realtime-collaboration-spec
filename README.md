@@ -58,6 +58,7 @@ The term **CRDT** is an acronym for Conflict-Free Replicated Data Type.
 ## Integration Recommendations
 *The following are working notes and not part of the specification*
 - Non-normative suggestions for how to implement editor extensions
+- "View extension" vs "Sync extension". View extensions only modify files within one "master" peer's workspace and don't persist code on the other peers' filesystems (eg Teletype, VSCode Live Share). Sync extensions modify files on all peers, and no peer has a unique role (eg Multihack, server-based solutions like CoVim). Either one should be possible to implement, as this specification will not assume anything about the filesystem. 
 
 ## Privacy And Security Considerations
 
