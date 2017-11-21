@@ -1,4 +1,4 @@
-# Client-Agnostic Realtime Collaboration for Programming
+# Realtime Collaboration for Programming
 ## Working Draft
 
 ### Editors:
