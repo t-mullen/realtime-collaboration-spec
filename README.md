@@ -38,7 +38,7 @@ The term **CRDT** is an acronym for Conflict-Free Replicated Data Type.
 ### Interfaces
 This section specifies public interfaces that must be available to the extension developer.
 
-### `CRDTFileIndex`
+### CRDTFileIndex
 A `CRDTFileIndex` instance represents a map of path names to files.
 
 ```erlang
@@ -55,7 +55,7 @@ interface CRDTFileIndex {
 }
 ```
 
-### `CRDTFile`
+### CRDTFile
 A `CRDTFile` instance represents a sequence of characters and a sequence of cursors.
 
 ```erlang
@@ -69,6 +69,7 @@ interface CRDTFile {
   void                      replaceRange(string, position, length);
   
   attribute EventHandler    onChange;
+  attribute EventHandler    onCursorMove;
   attribute EventHandler    onFileDelete;
 }
 ```
@@ -82,7 +83,7 @@ object CursorPosition {
 
 ## Events
 
-### `FileChangeEvent`
+### FileChangeEvent
 ```erlang
 object FileChangeEvent {
   String                         fileIdentifier;
@@ -104,7 +105,7 @@ object FileChangeDeleteAtom {
 }
 ```
 
-### `CursorMoveEvent`
+### CursorMoveEvent
 
 ```erlang
 object CursorMoveEvent {
