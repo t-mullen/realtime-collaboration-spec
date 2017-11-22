@@ -35,8 +35,86 @@ This document defines the APIs used for these features.
 The term **CRDT** is an acronym for Conflict-Free Replicated Data Type.
 
 ## CRDT Model
+### Interfaces
+This section specifies public interfaces that must be available to the extension developer.
+
+### `CRDTFileIndex`
+A `CRDTFileIndex` instance represents a map of path names to files.
+
+```erlang
+interface CRDTFileIndex {
+  CRDTFile            createFile(String path);
+  void                deleteFile(String path);
+  void                moveFile(String path, String newPath);
+  CRDTFile            getFile(String path);
+  sequence<CRDTFile>  getFiles();
+  
+  attribute EventHandler    onFileCreate;
+  attribute EventHandler    onFileDelete;
+  attribute EventHandler    onFileMove;
+}
+```
+
+### `CRDTFile`
+A `CRDTFile` instance represents a sequence of characters and a sequence of cursors.
+
+```erlang
+interface CRDTFile {
+  String                    getContent();
+  String                    getCharAt(index);
+  sequence<CursorPosition>  getCursors();
+  void                      setCursors(sequence<CursorPosition>);
+  void                      insert(string, position);
+  void                      delete(position, length);
+  void                      replaceRange(string, position, length);
+  
+  attribute EventHandler    onChange;
+  attribute EventHandler    onFileDelete;
+}
+```
+
+```erlang
+object CursorPosition {
+  unsigned long    line;
+  unsigned long    char;
+}
+```
+
+## Events
+
+### `FileChangeEvent`
+```erlang
+object FileChangeEvent {
+  String                         fileIdentifier;
+  sequence<FileChangeInsertAtom> inserts;
+  sequence<FileChangeDeleteAtom> deletes;
+}
+```
+
+```erlang
+object FileChangeInsertAtom {
+  unsigned long   index;
+  String          element;
+}
+```
+
+```erlang
+object FileChangeDeleteAtom {
+  unsigned long   index;
+}
+```
+
+### `CursorMoveEvent`
+
+```erlang
+object CursorMoveEvent {
+  String          fileIdentifier;
+  CursorPosition  position
+}
+```
+
 *The following are working notes and not part of the specification*
-- Possibly sequences nested in a map CRDT, mapping file paths to sequences.
+- Sequences nested in a map CRDT, mapping file paths to sequences.
 - Map could be implemented using Observe-Remove-Sets, sequences with LSEQ, Logoot, Woot, etc (likely with the Split optimization).
 - Sequences support undo.
 - Must allow diff-based merging for offline work (consensus protocol?).
@@ -50,6 +128,7 @@ The term **CRDT** is an acronym for Conflict-Free Replicated Data Type.
 - Must guarantee delivery.
 
 ## Overlay Protocol
+
 *The following are working notes and not part of the specification*
 - Must preserve causality (as CRDTs assume this)
 - Must guarantee eventual connectivity (the graph of peers is connected)
