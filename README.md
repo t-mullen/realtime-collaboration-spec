@@ -44,27 +44,32 @@ This section specifies public interfaces that **MUST** be available to the exten
 A `FileIndex` instance represents a map of path names to files.
 
 ```erlang
-[Constructor(String site)]
+[Constructor()]
 interface FileIndex {
   File                createFile(String path);
-  void                deleteFile(String path);
+  void                removeFile(String path);
   void                moveFile(String path, String newPath);
   File                getFile(String path);
   sequence<File>      getFiles();
   
-  attribute EventHandler<filecreate>    onFileCreate;
-  attribute EventHandler<filedelete>    onFileDelete;
-  attribute EventHandler<filemove>      onFileMove;
+  attribute EventHandler<FileCreateEvent>   onFileCreate;
+  attribute EventHandler<FileRemoveEvent>   onFileRemove;
+  attribute EventHandler<FileMoveEvent>     onFileMove;
 }
 ```
 
 #### Constructor
-When the `FileIndex()` constructor is invoked, the client **MUST** run the following steps.
-1. Store a reference to parameter `site` as `site`.
+When the `FileIndex()` constructor is invoked, the client **MUST** run the following algorithm.
+
+```javascript
+UniqueIdentifier site = 
+
+```
+1. Let `site` be a newly created `UniqueIdentifier`.
 2. Let `counter` be a `long`, initially set to `0`.
 3. Let `map` be a newly created `CRDTMap`.
-4. Let `index` be a newly created `record<String, FileIdentifier>`.
-5. `map.onAdd` **MUST** create a new `File` instance with 
+4. Let `index` be a newly created `record<String, UniqueIdentifier>`.
+5. `map.onAdd` is to be set to a function that **MUST** construct a new `File` instance with 
 
 #### Attributes
 
@@ -74,19 +79,140 @@ When the `FileIndex()` constructor is invoked, the client **MUST** run the follo
 A `File` instance represents a sequence of characters and a set of cursors.
 
 ```erlang
-[Constructor(FileIdentifier identifier)]
+[Constructor(UniqueIdentifier identifier)]
 interface File {
   String                    getContent();
   String                    getCharAt(long index);
   set<CursorPosition>       getCursors();
   void                      setCursors(sequence<CursorPosition> cursors);
   void                      insert(String string, long position);
-  void                      delete(long position, long length);
+  void                      remove(long position, long length);
   void                      replaceRange(String string, long position, long length);
-  boolean                   deleted;
+  boolean                   removed;
   
-  attribute EventHandler<change>        onChange;
-  attribute EventHandler<cursormove>    onCursorMove;
+  attribute EventHandler<ChangeEvent>     onChange;
+  attribute EventHandler<CursorMoveEvent> onCursorMove;
+}
+```
+
+## Private Interfaces
+This section specifies private interfaces that **SHOULD NOT** be available to the extension developer.
+
+### CRDTMap
+A replicatable `Map` data type.
+
+```erlang
+[Constructor(UniqueIdentifier identifier)]
+interface CRDTMap {
+  void    set(String key, String value);
+  void    remove(String key); 
+  String  get(String key);
+  String  contains(String key);
+  long    length();
+  set<String>     keys();
+  set<String>     values();
+  
+  attribute EventHandler<CRDTMapSetEvent>        onSet;
+  attribute EventHandler<CRDTMapRemoveEvent>     onRemove;
+}
+```
+
+### CRDTSet
+A replicatable `Set` data type. Similar to `CRDTMap` but without values assigned to the keys.
+
+```erlang
+[Constructor(UniqueIdentifier identifier)]
+interface CRDTSet {
+  void    add(String key);
+  void    remove(String key);
+  String  contains(String key);
+  String  keys();
+  long    size();
+  
+  attribute EventHandler<CRDTSetAddEvent>        onAdd;
+  attribute EventHandler<CRDTSetRemoveEvent>     onRemove;
+}
+```
+
+### CRDTSequence
+```erlang
+[Constructor(UniqueIdentifier identifier)]
+interface CRDTSequence {
+  void    insert(long index, String value);
+  void    remove(long index);
+  long    length();
+  String  content();
+  
+  attribute EventHandler<CRDTSequenceInsertEvent>     onInsert;
+  attribute EventHandler<CRDTSequenceRemoveEvent>     onRemove;
+}
+```
+
+### UniqueIdentifier
+```erlang
+interface  {
+  static site;
+  static readonly counter;
+
+  int   compare();
+}
+```
+
+## Event Summary
+
+### FileCreateEvent
+```erlang
+object {
+  String  path;
+  File    file;
+}
+```
+
+### FileRemoveEvent
+```erlang
+object {
+  String  path;
+  File    file;
+}
+```
+
+### FileMoveEvent
+```erlang
+object {
+  String  oldPath;
+  String  newPath;
+  File    file;
+}
+```
+
+### ChangeEvent
+```erlang
+object ChangeEvent {
+  String                     path;
+  sequence<ChangeInsertAtom> inserts;
+  sequence<ChangeRemoveAtom> removes;
+}
+```
+
+### ChangeInsertAtom
+```erlang
+object ChangeInsertAtom {
+  long            index;
+  String          element;
+}
+```
+
+### ChangeRemoveAtom
+```erlang
+object ChangeRemoveAtom {
+  long    index;
+}
+```
+
+### CursorMoveEvent
+```erlang
+object CursorMoveEvent {
+  CursorPosition  position;
 }
 ```
 
@@ -98,88 +224,49 @@ object CursorPosition {
 }
 ```
 
-### FileChangeEvent
+### CRDTMapSetEvent
 ```erlang
-object FileChangeEvent {
-  String                         fileIdentifier;
-  sequence<FileChangeInsertAtom> inserts;
-  sequence<FileChangeDeleteAtom> deletes;
+object {
+  String  key
+  String  value
 }
 ```
 
-### FileChangeInsertAtom
+### CRDTMapRemoveEvent
 ```erlang
-object FileChangeInsertAtom {
-  long            index;
-  String          element;
+object {
+  String  key
+  String  value
 }
 ```
 
-### FileChangeDeleteAtom
+### CRDTSequenceInsertEvent
 ```erlang
-object FileChangeDeleteAtom {
-  long    index;
+object {
+  String  index
+  String  value
 }
 ```
 
-### CursorMoveEvent
+### CRDTSequenceRemoveEvent
 ```erlang
-object CursorMoveEvent {
-  String          fileIdentifier;
-  CursorPosition  position;
+object {
+  String  index
+  String  value
 }
 ```
 
-## Private Interfaces
-This section specifies private interfaces that **SHOULD NOT** be available to the extension developer.
-
-### CRDTMap
+### CRDTSetRemoveEvent
 ```erlang
-interface CRDTMap {
-
-
+object {
+  String  key
 }
 ```
 
-### CRDTSet
-```erlang
-interface CRDTSet {
-
-
-}
-```
-
-### CRDTSequence
-```erlang
-interface CRDTSequence {
-
-
-}
-```
-
-### FileIdentifier
-```erlang
-object  {
-  String          site;
-  long            counter;
-}
-```
-
-
-## Event Summary
-
-### filecreate
-
-### filedelete
-
-### filemove
-
-### change
-
-### cursormove
 
 ## CRDT Model
 *This section is non-normative.*
+
 *The following are working notes and not part of the specification*
 - Sequences nested in a map CRDT, mapping file paths to sequences.
 - Map could be implemented using Observe-Remove-Sets, sequences with LSEQ, Logoot, Woot, etc (likely with the Split optimization).
@@ -188,6 +275,7 @@ object  {
 
 ## Network Protocol
 *This section is non-normative.*
+
 *The following are working notes and not part of the specification*
 - Must be available within web-based editors and more traditional IDEs.
 - Ideally is peer-to-peer with some fallback (WebRTC and WebSockets fallback?)
@@ -197,6 +285,7 @@ object  {
 
 ## Overlay Protocol
 *This section is non-normative.*
+
 *The following are working notes and not part of the specification*
 - Must preserve causality (as CRDTs assume this)
 - Must guarantee eventual connectivity (the graph of peers is connected)
@@ -204,6 +293,7 @@ object  {
 
 ## Integration Recommendations
 *This section is non-normative.*
+
 *The following are working notes and not part of the specification*
 - Non-normative suggestions for how to implement editor extensions
 - "View extension" vs "Sync extension". View extensions only modify files within one "master" peer's workspace and don't persist code on the other peers' filesystems (eg Teletype, VSCode Live Share). Sync extensions modify files on all peers, and no peer has a unique role (eg Multihack, server-based solutions like CoVim). Either one should be possible to implement, as this specification will not assume anything about the filesystem. 
