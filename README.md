@@ -264,12 +264,6 @@ object {
 ## CRDT Model
 *This section is non-normative.*
 
-*The following are working notes and not part of the specification*
-- Sequences nested in a map CRDT, mapping file paths to sequences.
-- Map could be implemented using Observe-Remove-Sets, sequences with LSEQ, Logoot, Woot, etc (likely with the Split optimization).
-- Sequences support undo.
-- Must allow diff-based merging for offline work (consensus protocol?).
-
 ## Network Protocol
 *This section is non-normative.*
 
