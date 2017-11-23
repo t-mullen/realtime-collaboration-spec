@@ -37,6 +37,11 @@ This document defines the APIs used for these features.
 ## Terminology
 The term **CRDT** is an acronym for Conflict-Free Replicated Data Type.
 
+**JSONParse** refers to any standards-compliant JSON parsing algorithm.
+
+**JSONSerialize** refers to any standards-compliant JSON serializing algorithm.
+
+
 ## Public Interfaces
 This section specifies public interfaces that **MUST** be available to the extension developer.
 
@@ -61,17 +66,12 @@ interface FileIndex {
 #### Constructor
 When the `FileIndex()` constructor is invoked, the client **MUST** run the following algorithm.
 
-```javascript
-UniqueIdentifier site = 
-
-```
-1. Let `site` be a newly created `UniqueIdentifier`.
-2. Let `counter` be a `long`, initially set to `0`.
-3. Let `map` be a newly created `CRDTMap`.
-4. Let `index` be a newly created `record<String, UniqueIdentifier>`.
-5. `map.onAdd` is to be set to a function that **MUST** construct a new `File` instance with 
-
 #### Attributes
+`onFileCreate` is an event handler that listens for a `FileCreateEvent`.
+
+`onFileRemove` is an event handler that listens for a `FileRemoveEvent`.
+
+`onFileMove` is an event handler that listens for a `FileMoveEvent`.
 
 #### Methods
 
@@ -151,10 +151,7 @@ interface CRDTSequence {
 ### UniqueIdentifier
 ```erlang
 interface  {
-  static site;
-  static readonly counter;
-
-  int   compare();
+  int   compare(UniqueIdentifier otherIdentifier);
 }
 ```
 
