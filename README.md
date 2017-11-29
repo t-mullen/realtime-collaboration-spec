@@ -66,12 +66,30 @@ interface FileIndex {
 #### Constructor
 When the `FileIndex()` constructor is invoked, the client **MUST** run the following algorithm.
 
-#### Attributes
-`onFileCreate` is an event handler that listens for a `FileCreateEvent`.
+```
+UniqueIdentifier site = UniqueIdentifier();
+CRDTMap map = CRDTMap(site);
+record<UniqueIdentifier, CRDTFile> files = record<UniqueIdentifier, CRDTFile>();
 
-`onFileRemove` is an event handler that listens for a `FileRemoveEvent`.
+map.onSet = function (e) {
+  String path = e.key
+  String fileId = e.value
+  if (files[fileId]) {
+    files[fileId] = File(fileId)
+    emit(FileMoveEvent)
+  } else {
+    files[fileId] = File(fileId)
+    emit(FileCreateEvent)
+  }
+}
 
-`onFileMove` is an event handler that listens for a `FileMoveEvent`.
+map.onRemove = function (e) {
+  String path = e.key
+  String fileId = e.value
+  delete files[fileId]
+  emit(FileRemoveEvent)
+}
+```
 
 #### Methods
 
@@ -250,13 +268,6 @@ object {
 object {
   String  index
   String  value
-}
-```
-
-### CRDTSetRemoveEvent
-```erlang
-object {
-  String  key
 }
 ```
 
