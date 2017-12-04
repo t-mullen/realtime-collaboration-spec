@@ -297,9 +297,9 @@ Removing is the same as adding/setting without the last step.
 *This section is non-normative.*
 
 *The following are working notes and not part of the specification*
-- Must be available within web-based editors and more traditional IDEs.
-- Ideally is peer-to-peer with some fallback (WebRTC and WebSockets fallback?)
-- Must allow offline work.
+- TCP Websockets first, negotiate alternate transports after.
+
+- Alternate transports:
 - Must preserve the order messages are sent in (at least between two peers).
 - Must guarantee delivery.
 
