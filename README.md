@@ -275,6 +275,24 @@ object {
 ## CRDT Model
 *This section is non-normative.*
 
+### CRDTMap
+The replicatable Map type is implemented using a Observed-Remove Set and a non-replicated dictionary of sets. The keys for the dictionary are the keys for the external map, the values for the dictionary are arrays of pairs of values and UUIDs and the elements for the OR-Set are tuples of Key, Value, UUID. While this seems complex, this is a very efficient replicated map that makes use of a set type:
+
+```
+CRDTSet {
+  ORSet<Element<Key,Value,UUID>> set
+  record<Key, Array<Pair<Value, UUID>>> dictionary
+}
+```
+
+The dictionary allows use to translate external keys to unique "key-value-UUID" elements for the set.
+
+To lookup a value on the map, we simply need to iterate through the array of pairs for the given key and return the value paired with the highest UUID.
+
+To add or set a value on the map, we iterate through any existing pairs and remove them from the set by translating them into elements. Then the dictionary is updated and a new element is created and added to the set.
+
+Removing is the same as adding/setting without the last step.
+
 ## Network Protocol
 *This section is non-normative.*
 
