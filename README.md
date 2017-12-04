@@ -75,7 +75,6 @@ map.onSet = function (e) {
   String path = e.key
   String fileId = e.value
   if (files[fileId]) {
-    files[fileId] = File(fileId)
     emit(FileMoveEvent)
   } else {
     files[fileId] = File(fileId)
@@ -108,6 +107,7 @@ interface File {
   void                      replaceRange(String string, long position, long length);
   boolean                   removed;
   
+  attribute String        path;
   attribute EventHandler<ChangeEvent>     onChange;
   attribute EventHandler<CursorMoveEvent> onCursorMove;
 }
@@ -178,7 +178,7 @@ interface  {
 ### FileCreateEvent
 ```erlang
 object {
-  String  path;
+  String  newPath;
   File    file;
 }
 ```
@@ -186,7 +186,7 @@ object {
 ### FileRemoveEvent
 ```erlang
 object {
-  String  path;
+  String  oldPath;
   File    file;
 }
 ```
