@@ -119,6 +119,9 @@ interface File {
 ## Private Interfaces
 This section specifies private interfaces that **SHOULD NOT** be available to the extension developer.
 
+### UniqueIdentifier
+Unique identifiers are 256-bit unsigned integers.
+
 ### CRDTMap
 A replicatable `Map` data type.
 
@@ -291,10 +294,55 @@ Additional transports must have the following properties:
 ## Overlay Protocol
 *This section is non-normative.*
 
-*The following are working notes and not part of the specification*
-- Must preserve causality (as CRDTs assume this)
-- Must guarantee eventual connectivity (the graph of peers is connected)
-- Must be robust (graph must be able to reconnect)
+All data types are unserialized integers unless specified. All integers are unsigned big-endian.
+
+All ranges are in bytes, with an exclusive right side. ie) `0:2` implies the byte range is the first byte and second byte.
+
+### InitMessage
+The first message in the protocol. Followed by HeaderMessage. Has no length prefix.
+```
+0:4   - Protocol version
+4:36  - The peer's 256-bit unique public idenitifer
+```
+
+### HeaderMessage
+Announces the next message to be received.
+```
+0:1    - Message type
+```
+
+The following operation types exist in the current specification:
+```
+0000 0000 - CRDTSetMessage
+0000 0001 - CRDTSequenceMessage
+```
+
+### CRDTSetMessage
+Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
+```
+0:32   - 256-bit file UUID
+32:42  - 64-bit remote operation counter
+42:44  - Operation type: 0=remove, 1=add
+```
+
+### CRDTSequenceMessage
+Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
+```
+0:32   - 256-bit file UUID
+32:42  - 64-bit remote operation counter
+42:44  - Operation type: 0=delete, 1=insert
+```
+
+### CRDTElementsMessage
+Represents an element (usually a character or filepath), that belongs to the previous message. Allows batching of related messages.
+
+Preceded by CRDTSetMessage or CRDTSequenceMessage. Followed by a HeaderMessage.
+```
+0:2   - The length prefix of this message, in bytes.
+2:3   - Whether this is the last entry in the sequence of CRDTElementsMessages: 0=false, 1=true
+3:4   - The serializer used for this element. Currently: 0=utf-8, 1=utf-16
+4:x   - Value of the element, serialized.
+```
 
 ## Integration Recommendations
 *This section is non-normative.*
