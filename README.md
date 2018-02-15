@@ -138,23 +138,6 @@ interface CRDTMap {
 }
 ```
 
-### CRDTSet
-A replicatable `Set` data type. Similar to `CRDTMap` but without values assigned to the keys.
-
-```erlang
-[Constructor(UniqueIdentifier identifier)]
-interface CRDTSet {
-  void    add(String key);
-  void    remove(String key);
-  String  contains(String key);
-  String  keys();
-  long    size();
-  
-  attribute EventHandler<CRDTSetAddEvent>        onAdd;
-  attribute EventHandler<CRDTSetRemoveEvent>     onRemove;
-}
-```
-
 ### CRDTSequence
 ```erlang
 [Constructor(UniqueIdentifier identifier)]
