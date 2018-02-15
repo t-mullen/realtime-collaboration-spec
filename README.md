@@ -308,7 +308,7 @@ The first message in the protocol. Followed by HeaderMessage. Has no length pref
 ### HeaderMessage
 Announces the next message to be received.
 ```
-0:1    - Message type
+0:1    - Operation type
 ```
 
 The following operation types exist in the current specification:
@@ -318,6 +318,8 @@ The following operation types exist in the current specification:
 ```
 
 ### CRDTSetMessage
+A CRDTSet operation.
+
 Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
 ```
 0:32   - 256-bit file UUID
@@ -326,6 +328,8 @@ Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
 ```
 
 ### CRDTSequenceMessage
+A CRDTSequence operation.
+
 Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
 ```
 0:32   - 256-bit file UUID
