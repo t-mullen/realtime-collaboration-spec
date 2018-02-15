@@ -49,7 +49,7 @@ This section specifies public interfaces that **MUST** be available to the exten
 A `FileIndex` instance represents a map of path names to files.
 
 ```erlang
-[Constructor()]
+[Constructor(UniqueIdentifier identifier)]
 interface FileIndex {
   File                create
   
