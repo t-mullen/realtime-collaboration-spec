@@ -296,12 +296,11 @@ Removing is the same as adding/setting without the last step.
 ## Network Protocol
 *This section is non-normative.*
 
-*The following are working notes and not part of the specification*
-- TCP Websockets first, negotiate alternate transports after.
+This specification does not limit implementations to a single transport. However, to ensure interoperability, a minimum of TCP WebSockets should be implemented.
 
-- Alternate transports:
+Additional transports must have the following properties:
 - Must preserve the order messages are sent in (at least between two peers).
-- Must guarantee delivery.
+- Must guarantee delivery of all messages.
 
 ## Overlay Protocol
 *This section is non-normative.*
