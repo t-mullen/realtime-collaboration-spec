@@ -128,7 +128,7 @@ interface CRDTMap {
   void    set(String key, String value);
   void    remove(String key); 
   String  get(String key);
-  String  contains(String key);
+  Boolean contains(String key);
   long    length();
   set<String>     keys();
   set<String>     values();
