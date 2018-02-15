@@ -51,7 +51,9 @@ A `FileIndex` instance represents a map of path names to files.
 ```erlang
 [Constructor()]
 interface FileIndex {
-  File                createFile(String path);
+  File                create
+  
+  String path);
   void                removeFile(String path);
   void                moveFile(String path, String newPath);
   File                getFile(String path);
@@ -76,8 +78,9 @@ map.onSet = function (e) {
   String fileId = e.value
   if (files[fileId]) {
     emit(FileMoveEvent)
+    files[fileId].path = path
   } else {
-    files[fileId] = File(fileId)
+    files[fileId] = File(path, fileId)
     emit(FileCreateEvent)
   }
 }
@@ -96,7 +99,7 @@ map.onRemove = function (e) {
 A `File` instance represents a sequence of characters and a set of cursors.
 
 ```erlang
-[Constructor(UniqueIdentifier identifier)]
+[Constructor(String path, UniqueIdentifier identifier)]
 interface File {
   String                    getContent();
   String                    getCharAt(long index);
