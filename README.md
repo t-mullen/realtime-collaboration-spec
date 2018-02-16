@@ -58,6 +58,7 @@ interface FileIndex {
   void                moveFile(String path, String newPath);
   File                getFile(String path);
   sequence<File>      getFiles();
+  void                applyOperation(CRDTMapOperation operation)
   
   attribute EventHandler<FileCreateEvent>   onFileCreate;
   attribute EventHandler<FileRemoveEvent>   onFileRemove;
@@ -99,16 +100,16 @@ map.onRemove = function (e) {
 A `File` instance represents a sequence of characters and a set of cursors.
 
 ```erlang
-[Constructor(String path, UniqueIdentifier identifier)]
+[Constructor(String path, UniqueIdentifier indexIdentifier, UniqueIdentifier identifier)]
 interface File {
   String                    getContent();
   String                    getCharAt(long index);
-  set<CursorPosition>       getCursors();
-  void                      setCursors(sequence<CursorPosition> cursors);
-  void                      insert(String string, long position);
-  void                      remove(long position, long length);
-  void                      replaceRange(String string, long position, long length);
-  boolean                   removed;
+  set<Cursor>               getCursors();
+  void                      setCursor(Cursor cursor);
+  void                      insert(String value, long index);
+  void                      remove(long index, long length);
+  void                      replaceRange(String value, long index, long length);
+  void                      applyOperation(CRDTSequenceOperation operation)
   
   attribute String        path;
   attribute EventHandler<ChangeEvent>     onChange;
@@ -135,6 +136,7 @@ interface CRDTMap {
   long    length();
   set<String>     keys();
   set<String>     values();
+  void    applyOperation(CRDTMapOperation operation);
   
   attribute EventHandler<CRDTMapSetEvent>        onSet;
   attribute EventHandler<CRDTMapRemoveEvent>     onRemove;
@@ -143,12 +145,14 @@ interface CRDTMap {
 
 ### CRDTSequence
 ```erlang
-[Constructor(UniqueIdentifier identifier)]
+[Constructor(UniqueIdentifier siteIdentifier, UniqueIdentifier identifier)]
 interface CRDTSequence {
-  void    insert(long index, String value);
+  void    insert(String value, long index);
   void    remove(long index);
   long    length();
   String  content();
+  String  charAt(long index);
+  void    applyOperation(CRDTSequenceOperation operation);
   
   attribute EventHandler<CRDTSequenceInsertEvent>     onInsert;
   attribute EventHandler<CRDTSequenceRemoveEvent>     onRemove;
@@ -159,6 +163,30 @@ interface CRDTSequence {
 ```erlang
 interface  {
   int   compare(UniqueIdentifier otherIdentifier);
+}
+```
+
+
+## Operations
+Remote operations are parsed from CRDTSetMessage, CRDTSequenceMessage and CRDTElementMessage. See [Overlay Protocol](#overlay-protocol)
+
+### CRDTMapOperation
+```erlang
+object {
+  String type;              // "add" or "remove"
+  UniqueIdentifier peerId;  // Unique ID of the peer who did the operation
+  int counter;              // 64-bit remote operation counter
+  String element;           // Element to be added/removed to the underlying set
+}
+```
+
+### CRDTSequenceOperation
+```erlang
+object {
+  String type;              // "insert" or "remove"
+  UniqueIdentifier peerId;  // Unique ID of the peer who did the operation
+  UniqueIdentifier fileId;  // Unique ID of the file
+  string id;                // JSON-serialized LSEQ array Id
 }
 ```
 
@@ -213,18 +241,27 @@ object ChangeRemoveAtom {
 }
 ```
 
-### CursorMoveEvent
+### CursorAddEvent
 ```erlang
 object CursorMoveEvent {
-  CursorPosition  position;
+  UniqueIdentifier  owner;
+  int               index;
 }
 ```
 
-### CursorPosition
+### CursorRemoveEvent
 ```erlang
-object CursorPosition {
-  long    line;
-  long    char;
+object CursorMoveEvent {
+  UniqueIdentifier  owner;
+  int               index;
+}
+```
+
+### Cursor
+```erlang
+object Cursor {
+  UniqueIdentifier  owner;
+  long              index;
 }
 ```
 
@@ -259,7 +296,6 @@ object {
   String  value
 }
 ```
-
 
 ## CRDT Model
 *This section is non-normative.*
@@ -315,12 +351,13 @@ The following operation types exist in the current specification:
 ```
 0000 0000 - CRDTSetMessage
 0000 0001 - CRDTSequenceMessage
+0000 0002 - CursorMessage
 ```
 
 ### CRDTSetMessage
 A CRDTSet operation.
 
-Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
+Preceded by a HeaderMessage. Followed by any number of CRDTElementMessage.
 ```
 0:32   - 256-bit file UUID
 32:42  - 64-bit remote operation counter
@@ -330,22 +367,29 @@ Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
 ### CRDTSequenceMessage
 A CRDTSequence operation.
 
-Preceded by a HeaderMessage. Followed by any number of CRDTElementsMessage.
+Preceded by a HeaderMessage. Followed by any number of CRDTElementMessage.
 ```
 0:32   - 256-bit file UUID
-32:42  - 64-bit remote operation counter
-42:44  - Operation type: 0=delete, 1=insert
+32:33  - Operation type: 0=remove, 1=insert
 ```
 
-### CRDTElementsMessage
+### CRDTElementMessage
 Represents an element (usually a character or filepath), that belongs to the previous message. Allows batching of related messages.
 
-Preceded by CRDTSetMessage or CRDTSequenceMessage. Followed by a HeaderMessage.
+Preceded by CRDTSetMessage or CRDTSequenceMessage. Followed by HeaderMessage.
 ```
 0:2   - The length prefix of this message, in bytes.
 2:3   - Whether this is the last entry in the sequence of CRDTElementsMessages: 0=false, 1=true
 3:4   - The serializer used for this element. Currently: 0=utf-8, 1=utf-16
-4:x   - Value of the element, serialized.
+4:x   - Value of the set element or LSEQ id, serialized as a string.
+```
+
+### CursorMessage
+Represents a cursor move.
+
+Preceded by HeaderMessage. Followed by HeaderMessage.
+```
+0:4   - The new index of the cursor.
 ```
 
 ## Integration Recommendations
