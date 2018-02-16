@@ -345,8 +345,9 @@ The first message in the protocol. Followed by SupportMessage. Has no length pre
 ### SupportMessage
 Declares the supported extension features. Followed by HeaderMessage.
 ```
-0:4     - Feature identifier
-4:8     - Feature identifier
+0:2     - The length prefix of this message, in bytes.
+2:6     - Feature identifier
+6:10    - Feature identifier
 x:x+4   - ...
 ```
 
