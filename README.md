@@ -364,18 +364,8 @@ The following operation types exist in the current specification:
 0000 0010 - CursorMessage
 ```
 
-### CRDTSetMessage
-A CRDTSet operation.
-
-Preceded by a HeaderMessage. Followed by any number of CRDTElementMessage.
-```
-0:32   - 256-bit file UUID
-32:42  - 64-bit remote operation counter
-42:44  - Operation type: 0=remove, 1=add
-```
-
-### CRDTSequenceMessage
-A CRDTSequence operation.
+### CRDTSetMessage/CRDTSequenceMessage
+A CRDTSet operation. The two message types are currently identical.
 
 Preceded by a HeaderMessage. Followed by any number of CRDTElementMessage.
 ```
