@@ -1,0 +1,26 @@
+{
+  "name": "collab-js",
+  "version": "1.0.0",
+  "description": "realtime-collaboration-spec reference implementation.",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "standard --fix src/** && tape test/*.js",
+    "build": "browserify src/index.js -s RCS -o dist/rcs.js",
+    "test-browser": "zuul --local -- test/*.js"
+  },
+  "author": "Thomas Mullen",
+  "license": "MIT",
+  "devDependencies": {
+    "standard": "^8.6.0",
+    "tape": "^4.6.3"
+  },
+  "dependencies": {
+    "inherits": "^2.0.3",
+    "lseqarray": "^0.1.6",
+    "nanobus": "^4.3.3",
+    "observed-remove-map": "^1.1.0"
+  }
+}
