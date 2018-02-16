@@ -342,6 +342,14 @@ The first message in the protocol. Followed by HeaderMessage. Has no length pref
 4:36  - The peer's 256-bit unique public idenitifer
 ```
 
+### SupportMessage
+Declares the supported extension features.
+```
+0:4     - Feature identifier
+4:8     - Feature identifier
+x:x+4   - ...
+```
+
 ### HeaderMessage
 Announces the next message to be received.
 ```
