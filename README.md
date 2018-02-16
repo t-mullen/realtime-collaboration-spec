@@ -169,7 +169,7 @@ interface  {
 
 
 ## Operations
-Remote operations are parsed from CRDTSetMessage, CRDTSequenceMessage and CRDTElementMessage. See [Overlay Protocol](#overlay-protocol)
+Remote operations are serialized into CRDTSetMessage, CRDTSequenceMessage and CRDTElementMessage. See [Overlay Protocol](#overlay-protocol)
 
 ### CRDTMapOperation
 ```erlang
@@ -384,14 +384,14 @@ Preceded by a HeaderMessage. Followed by any number of CRDTElementMessage.
 ```
 
 ### CRDTElementMessage
-Represents an element (usually a character or filepath), that belongs to the previous message. Allows batching of related messages.
+Represents an element (usually a character or filepath), that belongs to the previous message. Allows batching of operations that are acting on the same file.
 
 Preceded by CRDTSetMessage or CRDTSequenceMessage. Followed by HeaderMessage.
 ```
 0:2   - The length prefix of this message, in bytes.
 2:3   - Whether this is the last entry in the sequence of CRDTElementsMessages: 0=false, 1=true
-3:4   - The serializer used for this element. Currently: 0=utf-8, 1=utf-16
-4:x   - Value of the set element or LSEQ id, serialized as a string.
+3:4   - The serializer used for this element. Currently: 0=JSON
+4:x   - The serialized CRDT operation. It is opaque to the protocol. See #Operations above.
 ```
 
 ### CursorMessage
