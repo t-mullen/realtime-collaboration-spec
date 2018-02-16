@@ -111,6 +111,7 @@ interface File {
   void                      replaceRange(String value, long index, long length);
   void                      applyOperation(CRDTSequenceOperation operation)
   
+  attribute Boolean       removed;
   attribute String        path;
   attribute EventHandler<ChangeEvent>     onChange;
   attribute EventHandler<CursorMoveEvent> onCursorMove;
