@@ -336,14 +336,14 @@ All data types are unserialized integers unless specified. All integers are unsi
 All ranges are in bytes, with an exclusive right side. ie) `0:2` implies the byte range is the first byte and second byte.
 
 ### InitMessage
-The first message in the protocol. Followed by HeaderMessage. Has no length prefix.
+The first message in the protocol. Followed by SupportMessage. Has no length prefix.
 ```
 0:4   - Protocol version
 4:36  - The peer's 256-bit unique public idenitifer
 ```
 
 ### SupportMessage
-Declares the supported extension features.
+Declares the supported extension features. Followed by HeaderMessage.
 ```
 0:4     - Feature identifier
 4:8     - Feature identifier
