@@ -361,7 +361,7 @@ The following operation types exist in the current specification:
 ```
 0000 0000 - CRDTSetMessage
 0000 0001 - CRDTSequenceMessage
-0000 0002 - CursorMessage
+0000 0010 - CursorMessage
 ```
 
 ### CRDTSetMessage
