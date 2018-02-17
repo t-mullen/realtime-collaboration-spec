@@ -94,8 +94,6 @@ map.onRemove = function (e) {
 }
 ```
 
-#### Methods
-
 ### File
 A `File` instance represents a sequence of characters and a set of cursors.
 
@@ -105,7 +103,8 @@ interface File {
   String                    getContent();
   String                    getCharAt(long index);
   set<Cursor>               getCursors();
-  void                      setCursor(Cursor cursor);
+  void                      insertCursor(int index);
+  void                      removeCursor(int index);
   void                      insert(String value, long index);
   void                      remove(long index, long length);
   void                      replaceRange(String value, long index, long length);
@@ -115,6 +114,17 @@ interface File {
   attribute String        path;
   attribute EventHandler<ChangeEvent>     onChange;
   attribute EventHandler<CursorMoveEvent> onCursorMove;
+}
+```
+
+### Cursor
+A `Cursor` instance reprents a cursor within some file.
+
+```erlang
+object {
+  UniqueIdentifer   peerId;
+  UniqueIdentifer   fileId;
+  int               index;
 }
 ```
 
@@ -169,12 +179,12 @@ interface  {
 
 
 ## Operations
-Remote operations are serialized into CRDTSetMessage, CRDTSequenceMessage and CRDTElementMessage. See [Overlay Protocol](#overlay-protocol)
+Operations are serialized into binary messages by the overlay protocol and should not be seen by the application. See [Overlay Protocol](#overlay-protocol)
 
-### CRDTMapOperation
+### CRDTSetOperation
 ```erlang
 object {
-  String type;              // "add" or "remove"
+  String type;              // "insert" or "remove"
   UniqueIdentifier peerId;  // Unique ID of the peer who did the operation
   int counter;              // 64-bit remote operation counter
   String element;           // Element to be added/removed to the underlying set
@@ -188,6 +198,16 @@ object {
   UniqueIdentifier peerId;  // Unique ID of the peer who did the operation
   UniqueIdentifier fileId;  // Unique ID of the file
   string id;                // JSON-serialized LSEQ array Id
+}
+```
+
+### CursorOperation
+```erlang
+object {
+  String type;              // "insert" or "remove"
+  UniqueIdentifier peerId;  // Unique ID of the peer who did the operation
+  UniqueIdentifier fileId;  // Unique ID of the file
+  int index;                // New or old index of the cursor
 }
 ```
 
@@ -220,7 +240,7 @@ object {
 
 ### ChangeEvent
 ```erlang
-object ChangeEvent {
+object {
   String                     path;
   sequence<ChangeInsertAtom> inserts;
   sequence<ChangeRemoveAtom> removes;
@@ -229,7 +249,7 @@ object ChangeEvent {
 
 ### ChangeInsertAtom
 ```erlang
-object ChangeInsertAtom {
+object {
   long            index;
   String          element;
 }
@@ -237,32 +257,24 @@ object ChangeInsertAtom {
 
 ### ChangeRemoveAtom
 ```erlang
-object ChangeRemoveAtom {
+object {
   long    index;
 }
 ```
 
-### CursorAddEvent
+### CursorInsertEvent
 ```erlang
-object CursorMoveEvent {
-  UniqueIdentifier  owner;
-  int               index;
+object {
+  UniqueIdentifier fileId;
+  Cursor cursor;
 }
 ```
 
 ### CursorRemoveEvent
 ```erlang
-object CursorMoveEvent {
-  UniqueIdentifier  owner;
-  int               index;
-}
-```
-
-### Cursor
-```erlang
-object Cursor {
-  UniqueIdentifier  owner;
-  long              index;
+object {
+  UniqueIdentifier fileId;
+  Cursor cursor;
 }
 ```
 
@@ -352,44 +364,45 @@ x:x+4   - ...
 ```
 
 ### HeaderMessage
-Announces the next message to be received.
+Announces the type of data being operated on.
 ```
-0:1    - Operation type
+0:1    - Data type
 ```
 
 The following operation types exist in the current specification:
 ```
-0000 0000 - CRDTSetMessage
-0000 0001 - CRDTSequenceMessage
-0000 0010 - CursorMessage
+0000 0000 - CRDTSet. Followed by a CRDTOperationMessage.
+0000 0001 - CRDTSequence. Followed by a FileIdentifierMessage.
+0000 0010 - Cursor. Followed by a FileIdentifierMessage.
 ```
 
-### CRDTSetMessage/CRDTSequenceMessage
-A CRDTSet operation. The two message types are currently identical.
+### FileIdentiferMessage
+Announces the unique file ID that the following operations are acting on.
 
-Preceded by a HeaderMessage. Followed by any number of CRDTElementMessage.
+Preceded by a HeaderMessage. Followed by any number of CRDTOperationMessage.
 ```
 0:32   - 256-bit file UUID
-32:33  - Operation type: 0=remove, 1=insert
 ```
 
-### CRDTElementMessage
-Represents an element (usually a character or filepath), that belongs to the previous message. Allows batching of operations that are acting on the same file.
+### CRDTOperationMessage
+Represents an operation being done an a CRDT specified by the previous FileIdentiferMessage. Allows batching of operations that are acting on the same file.
 
-Preceded by CRDTSetMessage or CRDTSequenceMessage. Followed by HeaderMessage.
+Preceded by FileIdentiferMessage. Followed by HeaderMessage.
 ```
 0:2   - The length prefix of this message, in bytes.
-2:3   - Whether this is the last entry in the sequence of CRDTElementsMessages: 0=false, 1=true
-3:4   - The serializer used for this element. Currently: 0=JSON
-4:x   - The serialized CRDT operation. It is opaque to the protocol. See #Operations above.
+2:3   - Whether this is the last entry in the sequence of CRDTOperationMessages: 0=false, 1=true
+3:4   - Operation type: 0=remove, 1=insert
+4:5   - The serializer used for this element. Currently: 0=JSON
+5:x   - The serialized CRDT operation. It is opaque to the protocol. See #Operations above.
 ```
 
 ### CursorMessage
-Represents a cursor move.
+Represents a cursor addition/removal.
 
-Preceded by HeaderMessage. Followed by HeaderMessage.
+Preceded by FileIdentifierMessage. Followed by HeaderMessage.
 ```
-0:4   - The new index of the cursor.
+0:1   - 0=remove, 1=add
+1:5   - The index of the cursor.
 ```
 
 ## Integration Recommendations
