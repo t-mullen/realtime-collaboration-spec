@@ -124,7 +124,7 @@ A `Cursor` instance reprents a cursor within some file.
 object {
   UniqueIdentifer   peerId;
   UniqueIdentifer   fileId;
-  int               index;
+  int               offset;
 }
 ```
 
@@ -402,7 +402,7 @@ Represents a cursor addition/removal.
 Preceded by FileIdentifierMessage. Followed by HeaderMessage.
 ```
 0:1   - 0=remove, 1=add
-1:5   - The index of the cursor.
+1:5   - The offset of the cursor.
 ```
 
 ## Integration Recommendations
