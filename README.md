@@ -144,7 +144,6 @@ interface CRDTMap {
   void    remove(String key); 
   String  get(String key);
   Boolean contains(String key);
-  long    length();
   set<String>     keys();
   set<String>     values();
   void    applyOperation(CRDTMapOperation operation);
