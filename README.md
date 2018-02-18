@@ -101,13 +101,13 @@ A `File` instance represents a sequence of characters and a set of cursors.
 [Constructor(String path, UniqueIdentifier indexIdentifier, UniqueIdentifier identifier)]
 interface File {
   String                    getContent();
-  String                    getCharAt(long index);
+  String                    getCharAt(long offset);
   set<Cursor>               getCursors();
-  void                      insertCursor(int index);
-  void                      removeCursor(int index);
-  void                      insert(String value, long index);
-  void                      remove(long index, long length);
-  void                      replaceRange(String value, long index, long length);
+  void                      insertCursor(int offset);
+  void                      removeCursor(int offset);
+  void                      write(long offset, String value);
+  void                      remove(long offset, long length);
+  void                      replaceRange(String value, long offset, long length);
   void                      applyOperation(CRDTSequenceOperation operation)
   
   attribute Boolean       removed;
@@ -158,7 +158,7 @@ interface CRDTMap {
 ```erlang
 [Constructor(UniqueIdentifier siteIdentifier, UniqueIdentifier identifier)]
 interface CRDTSequence {
-  void    insert(String value, long index);
+  void    insert(long index, String value);
   void    remove(long index);
   long    length();
   String  content();
