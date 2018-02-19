@@ -7,20 +7,24 @@
     "test": "test"
   },
   "scripts": {
-    "test": "standard --fix src/** && tape test/*.js",
+    "test": "standard --fix src/**/* && tape test/*/CRDTSequence.js",
     "build": "browserify src/index.js -s RCS -o dist/rcs.js",
-    "test-browser": "zuul --local -- test/*.js"
+    "test-browser": "zuul --local -- test/*/*.js"
   },
   "author": "Thomas Mullen",
   "license": "MIT",
   "devDependencies": {
     "standard": "^8.6.0",
+    "tap-spec": "^4.1.1",
     "tape": "^4.6.3"
   },
   "dependencies": {
+    "cuid": "^2.1.0",
     "inherits": "^2.0.3",
     "lseqarray": "^0.1.6",
     "nanobus": "^4.3.3",
-    "observed-remove-map": "^1.1.0"
+    "observed-remove-map": "^2.0.0",
+    "safe-buffer": "^5.1.1",
+    "wire-protocol": "^2.0.0"
   }
 }

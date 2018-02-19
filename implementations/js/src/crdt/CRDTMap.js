@@ -1,28 +1,30 @@
 var EventEmitter = require('nanobus')
 var inherits = require('inherits')
-var OrMap = require('observe-removed-map')
+var OrMap = require('observed-remove-map')
 
 var def = require('./../definitions')
 
 inherits(CRDTMap, EventEmitter)
 
 function CRDTMap (uuid) {
+  EventEmitter.call(this)
+
   this._map = new OrMap(uuid)
 
-  this._map.on('set', function (key, value) {
-    self.emit('set', new def.CRDTMapSetEvent(key, value))
+  this._map.on('set', (key, value) => {
+    this.emit('set', new def.CRDTMapSetEvent(key, value))
   })
-  this._map.on('delete', function (key, value) {
-    self.emit('remove', new def.CRDTMapRemoveEvent(key, value))
+  this._map.on('delete', (key, value) => {
+    this.emit('remove', new def.CRDTMapRemoveEvent(key, value))
   })
-  this._map.on('op', function (op) {
-    // normalize OrMap's operation
-    var type = op[0] === 'delete' ? 'remove' : 'add'
-    self.emit('operation', new def.CRDTMapOperation(
-      type,
-      uuid,
-      op[2][0],
-      op[1]
+  this._map.on('op', (op) => {
+    // normalize OrMap's operation object
+    var type = op[0] === 'delete' ? 'remove' : 'insert'
+    this.emit('operation', new def.CRDTMapOperation(
+      type,     // 'remove' or 'insert'
+      uuid,     // our peerId
+      op[2][0], // counter
+      op[1]     // element
     ))
   })
 }
@@ -43,10 +45,6 @@ CRDTMap.prototype.contains = function (key) {
   return !!this._map.get(key)
 }
 
-CRDTMap.prototype.length = function () {
-  return this._map.keys().length
-}
-
 CRDTMap.prototype.keys = function () {
   return this._map.keys()
 }
@@ -57,11 +55,13 @@ CRDTMap.prototype.values = function () {
 
 CRDTMap.prototype.applyOperation = function (op) {
   // put it into OrMap's form
-  this._map.receive([
-    op.type,
+  var type = op.type === 'remove' ? 'delete' : 'add'
+  var fixedOp = [
+    type,
     op.element,
-    [opt.counter, op.peerId]
-  ])
+    [op.counter, op.peerId]
+  ]
+  this._map.receive(fixedOp)
 }
 
 module.exports = CRDTMap

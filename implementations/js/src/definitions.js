@@ -1,4 +1,6 @@
 
+var cuid = require('cuid')
+
 module.exports.FileCreateEvent = function (newPath, file) {
   this.newPath = newPath
   this.file = file
@@ -72,7 +74,29 @@ module.exports.CRDTSequenceOperation = function (type, peerId, fileId, id) {
   this.id = id
 }
 
-module.exports.Cursor = function (owner, index) {
-  this.owner = owner
-  this.index = index
+module.exports.CursorOperation = function (type, peerId, fileId, index) {
+  this.type = type
+  this.peerId = peerId
+  this.fileId = fileId
+  this.offset = offset
+}
+
+module.exports.Cursor = function (peerId, fileId, index) {
+  this.peerId = peerId
+  this.fileId = fileId
+  this.offset = offset
+}
+
+module.exports.CursorAddEvent = function (fileId, cursor) {
+  this.fileId = fileId
+  this.cursor = cursor
+}
+
+module.exports.CursorRemoveEvent = function (fileId, cursor) {
+  this.fileId = fileId
+  this.cursor = cursor
+}
+
+module.exports.UUID = function () {
+  return (cuid() + cuid()).slice(0, 32)
 }

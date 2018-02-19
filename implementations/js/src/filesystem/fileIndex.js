@@ -19,6 +19,9 @@ function FileIndex (uuid) {
 
   this._map.on('set', this._onSet.bind(this))
   this._map.on('remove', this._onRemove.bind(this))
+  this._map.on('operation', (op) => {
+    this.emit('operation', op)
+  })
 }
 
 FileIndex.prototype._onSet = function (event) {
@@ -44,8 +47,8 @@ FileIndex.prototype._onRemove = function (event) {
 }
 
 FileIndex.prototype.createFile = function (path) {
-  var uuid = this._uuid + this._counter++
-  var newFile = new File(path, this._uuid, ++uuid) // create a new UUID by incrementing ours
+  var uuid = def.UUID()
+  var newFile = new File(path, this._uuid, uuid)
   this._files[uuid] = newFile
   this._map.set(path, uuid)
 }
@@ -75,10 +78,10 @@ FileIndex.prototype.getFiles = function () {
 }
 
 FileIndex.prototype.applyOperation = function (operation) {
-  if (operation.fileId) {
-    this._files[operation.fileId].applyOperation(operation)
-  } else {
+  if (!operation.fileId) {
     this._map.applyOperation(operation)
+  } else {
+    this._files[operation.fileId].applyOperation(operation)
   }
 }
 

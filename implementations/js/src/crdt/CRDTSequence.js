@@ -7,16 +7,19 @@ var def = require('./../definitions')
 inherits(CRDTSequence, EventEmitter)
 
 function CRDTSequence (siteId, uuid) {
+  EventEmitter.call(this)
+
   this._siteId = siteId
   this._uuid = uuid
 
-  this._sequence = new LSEQTree(uuid)
+  this._sequence = new LSEQTree(siteId)
 }
 
-CRDTSequence.prototype.insert = function (value, index) {
-  var i = str.length;
+CRDTSequence.prototype.insert = function (index, value) {
   var ei = this._sequence.insert(value, index)
-  self.emit('operation', def.CRDTSequenceOperation(
+
+  // Normalize lseqarray's operation object
+  this.emit('operation', new def.CRDTSequenceOperation(
     'insert',
     this._siteId,
     this._uuid,
@@ -25,8 +28,11 @@ CRDTSequence.prototype.insert = function (value, index) {
 }
 
 CRDTSequence.prototype.remove = function (index) {
-  var idDelete = this._sequence.remove(index)
-  self.emit('operation', def.CRDTSequenceOperation(
+  if (index >= this._sequence.length) return // protect the end node
+  var idDelete = this._sequence.remove(index) // don't delete the leaf node
+
+   // Normalize lseqarray's operation object
+  this.emit('operation', new def.CRDTSequenceOperation(
     'remove',
     this._siteId,
     this._uuid,
@@ -41,21 +47,27 @@ CRDTSequence.prototype.length = function () {
 CRDTSequence.prototype.content = function () {
   var all = []
   var i = this._sequence.length
-  while (i--) {
-    all.push(this._sequence.get(i))
+  if (i > 0) {
+    while (i--) {
+      all.push(this.charAt(i))
+    }
   }
   return all.join('')
 }
 
 CRDTSequence.prototype.charAt = function (index) {
-  return this._sequence.get(index)
+  var element = this._sequence.get(index)
+  return element ? element._e : null
 }
 
 CRDTSequence.prototype.applyOperation = function (op) {
+  if (op.fileId !== this._uuid) {
+    throw new Error('UUID mismatch!')
+  }
   if (op.type === 'insert') {
     var ei = JSON.parse(op.id)
     this._sequence.applyInsert(ei._e, ei._i)
-  } else if (opt.type === 'remove') {
+  } else if (op.type === 'remove') {
     var ri = JSON.parse(op.id)
     this._sequence.applyRemove(ri)
   }
